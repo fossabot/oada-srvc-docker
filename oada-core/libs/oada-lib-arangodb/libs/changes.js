@@ -182,11 +182,23 @@ function getRootChange(resourceId, changeRev) {
   `).call('next');
 }
 
-function putChange({change, resId, rev, type, child, path, userId, authorizationId}) {
+function putChange({
+  change,
+  resId,
+  rev,
+  type,
+  children,
+  path,
+  userId,
+  authorizationId,
+}) {
+  if (!Array.isArray(children)) {
+    throw new Error("children must be an array.");
+  }
   let number = parseInt(rev, 10);
-  // The FOR loop below is an if statement handling the case where no child
-  // exists
-  return db.query(aql`
+  return db
+    .query(
+      aql`
     LET doc = FIRST(
       INSERT {
         body: ${change},
@@ -200,7 +212,7 @@ function putChange({change, resId, rev, type, child, path, userId, authorization
     )
 
     LET children = (
-      FOR child IN ${child ? [child] : []}
+      FOR child IN ${children}
         INSERT {
           _to: child,
           _from: doc._id,
@@ -208,8 +220,9 @@ function putChange({change, resId, rev, type, child, path, userId, authorization
         } in ${changeEdges}
     )
     RETURN doc._id
-  `)
-  .call('next');
+  `,
+    )
+    .call("next");
 }
 
 module.exports = {
