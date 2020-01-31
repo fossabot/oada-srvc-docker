@@ -195,6 +195,10 @@ function putChange({
   if (!Array.isArray(children)) {
     throw new Error("children must be an array.");
   }
+  let numberedChildren = [];
+  children.forEach(function(item, index) {
+    numberedChildren.push({ order: index, change_id: item });
+  });
   let number = parseInt(rev, 10);
   return db
     .query(
@@ -212,11 +216,12 @@ function putChange({
     )
 
     LET children = (
-      FOR child IN ${children}
+      FOR child IN ${numberedChildren}
         INSERT {
-          _to: child,
+          _to: child.change_id,
           _from: doc._id,
-          path: ${path || null}
+          path: ${path || null},
+          order: child.order
         } in ${changeEdges}
     )
     RETURN doc._id
